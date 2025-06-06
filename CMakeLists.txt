@@ -48,6 +48,8 @@ pico_enable_stdio_usb(mqtt_client 1)
 target_link_libraries(mqtt_client
     pico_stdlib
     hardware_adc
+    hardware_pwm
+    hardware_clocks
     pico_cyw43_arch_lwip_threadsafe_background
     pico_lwip_mqtt
     pico_mbedtls

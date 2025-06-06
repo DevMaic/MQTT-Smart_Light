@@ -13,6 +13,12 @@
 #include "hardware/irq.h"           // Biblioteca de hardware de interrupções
 #include "hardware/adc.h"           // Biblioteca de hardware para conversão ADC
 
+#include "hardware/pwm.h"
+#include "hardware/clocks.h"
+#define LED_PIN 13
+// Obtém o slice de PWM do pino
+uint slice_num;
+
 #include "lwip/apps/mqtt.h"         // Biblioteca LWIP MQTT -  fornece funções e recursos para conexão MQTT
 #include "lwip/apps/mqtt_priv.h"    // Biblioteca que fornece funções e recursos para Geração de Conexões
 #include "lwip/dns.h"               // Biblioteca que fornece funções e recursos suporte DNS:
@@ -149,6 +155,21 @@ static void start_client(MQTT_CLIENT_DATA_T *state);
 static void dns_found(const char *hostname, const ip_addr_t *ipaddr, void *arg);
 
 int main(void) {
+    // Configura o pino como função PWM
+    gpio_set_function(LED_PIN, GPIO_FUNC_PWM);
+
+    // Obtém o slice de PWM do pino
+    slice_num = pwm_gpio_to_slice_num(LED_PIN);
+
+    // Configuração padrão do PWM
+    pwm_config config = pwm_get_default_config();
+    pwm_init(slice_num, &config, true);
+
+    // Define o contador máximo (resolução PWM)
+    pwm_set_wrap(slice_num, 100);  // 8 bits de resolução
+
+    // Começa com brilho zero
+    pwm_set_gpio_level(LED_PIN, 0);
 
     // Inicializa todos os tipos de bibliotecas stdio padrão presentes que estão ligados ao binário.
     stdio_init_all();
@@ -293,18 +314,6 @@ static void control_led(MQTT_CLIENT_DATA_T *state, bool on) {
     mqtt_publish(state->mqtt_client_inst, full_topic(state, "/led/state"), message, strlen(message), MQTT_PUBLISH_QOS, MQTT_PUBLISH_RETAIN, pub_request_cb, state);
 }
 
-// Controle da intensidade do LED 
-static void control_led_intensity(MQTT_CLIENT_DATA_T *state, bool on) {
-    // Publish state on /state topic and on/off led board
-    const char* message = on ? "On" : "Off";
-    if (on)
-        cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, 1);
-    else
-        cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, 0);
-
-    mqtt_publish(state->mqtt_client_inst, full_topic(state, "/led/state"), message, strlen(message), MQTT_PUBLISH_QOS, MQTT_PUBLISH_RETAIN, pub_request_cb, state);
-}
-
 // Publicar temperatura
 static void publish_temperature(MQTT_CLIENT_DATA_T *state) {
     static float old_temperature;
@@ -351,6 +360,7 @@ static void sub_unsub_topics(MQTT_CLIENT_DATA_T* state, bool sub) {
     mqtt_sub_unsub(state->mqtt_client_inst, full_topic(state, "/print"), MQTT_SUBSCRIBE_QOS, cb, state, sub);
     mqtt_sub_unsub(state->mqtt_client_inst, full_topic(state, "/ping"), MQTT_SUBSCRIBE_QOS, cb, state, sub);
     mqtt_sub_unsub(state->mqtt_client_inst, full_topic(state, "/exit"), MQTT_SUBSCRIBE_QOS, cb, state, sub);
+    mqtt_sub_unsub(state->mqtt_client_inst, full_topic(state, "/pwm"), MQTT_SUBSCRIBE_QOS, cb, state, sub);
 }
 
 // Dados de entrada MQTT
@@ -382,7 +392,14 @@ static void mqtt_incoming_data_cb(void *arg, const u8_t *data, u16_t len, u8_t f
         state->stop_client = true; // stop the client when ALL subscriptions are stopped
         sub_unsub_topics(state, false); // unsubscribe
     } else if (strcmp(basic_topic, "/pwm") == 0) {
-        control_led_intensity(state, (const char *)state->data);
+        int pwmLevel = atoi((const char *)state->data);
+        if (pwmLevel < 0 || pwmLevel > 100) {
+            ERROR_printf("Invalid PWM level: %d. Must be between 0 and 100.\n", pwmLevel);
+        } else {
+            // Define o nível de PWM com base no valor recebido
+            pwm_set_gpio_level(LED_PIN, pwmLevel);
+            INFO_printf("PWM level set to %d%%\n", pwmLevel);
+        }
     }
 }
 
