@@ -1,10 +1,3 @@
- /* AULA IoT - Ricardo Prates - 001 - Cliente MQTT - Publisher:/Temperatura; Subscribed:/led
- *
- * Material de suporte - 27/05/2025
- * 
- * Código adaptado de: https://github.com/raspberrypi/pico-examples/tree/master/pico_w/wifi/mqtt 
- */
-
 #include "pico/stdlib.h"            // Biblioteca da Raspberry Pi Pico para funções padrão (GPIO, temporização, etc.)
 #include "pico/cyw43_arch.h"        // Biblioteca para arquitetura Wi-Fi da Pico com CYW43
 #include "pico/unique_id.h"         // Biblioteca com recursos para trabalhar com os pinos GPIO do Raspberry Pi Pico
@@ -26,11 +19,11 @@ uint slice_num;
 
 // #define WIFI_SSID "FIBRANET.COM - 87981616006"                  // Substitua pelo nome da sua rede Wi-Fi
 // #define WIFI_PASSWORD "Bira1210"      // Substitua pela senha da sua rede Wi-Fi
-#define WIFI_SSID "MAIC"                  // Substitua pelo nome da sua rede Wi-Fi
-#define WIFI_PASSWORD "motomoto"      // Substitua pela senha da sua rede Wi-Fi
-#define MQTT_SERVER "192.168.137.231"                // Substitua pelo endereço do host - broket MQTT: Ex: 192.168.1.107
-#define MQTT_USERNAME "Maic"     // Substitua pelo nome da host MQTT - Username
-#define MQTT_PASSWORD "12345"     // Substitua pelo Password da host MQTT - credencial de acesso - caso exista
+#define WIFI_SSID "NOME DA SUA REDE WIFI"                  // Substitua pelo nome da sua rede Wi-Fi
+#define WIFI_PASSWORD "SENHA DA SUA REDE WIFI"      // Substitua pela senha da sua rede Wi-Fi
+#define MQTT_SERVER "IP DO SE BROKER MQTT"                // Substitua pelo endereço do host - broket MQTT: Ex: 192.168.1.107
+#define MQTT_USERNAME "NOME DO HOST MQTT"     // Substitua pelo nome da host MQTT - Username
+#define MQTT_PASSWORD "SENHA DO HOST MQTT"     // Substitua pelo Password da host MQTT - credencial de acesso - caso exista
 
 // Definição da escala de temperatura
 #ifndef TEMPERATURE_UNITS
